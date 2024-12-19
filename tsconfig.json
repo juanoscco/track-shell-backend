@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",             
+    "target": "es2016",  
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "rootDir": "./src",             // Define la carpeta fuente
+    "outDir": "./dist",             // Carpeta de salida para la compilación
+    "sourceMap": true,               // Para depuración (opcional)
+    "experimentalDecorators": true,         // Enable decorators
+    "emitDecoratorMetadata": true,          // Add metadata for decorators (needed for TypeORM)
+    "strictPropertyInitialization": false,   // Disable strict property initialization
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/types/**/*.d.ts",  // Incluye el archivo de tipos
+    "src/**/*"
+  ]
+}
