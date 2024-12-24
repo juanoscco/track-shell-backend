@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Bag } from './Bag';
+import { Record } from './Records';
 
 @Entity()
 export class Category {
@@ -9,6 +9,6 @@ export class Category {
   @Column()
   name: string; // El nombre de la categoría
 
-  @OneToMany(() => Bag, (bag) => bag.category)
-  bags: Bag[]; // Relación de una categoría con muchas bolsas
+  @OneToMany(() => Record, (record) => record.category)
+  records: Record[]; // Relación de una categoría con muchas registros
 }

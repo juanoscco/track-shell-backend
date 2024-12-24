@@ -2,12 +2,16 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'ty
 import { User } from './User';
 import { Client } from "./Clients"
 import { Bag } from './Bag';
+import { Category } from './Categories';
 
 @Entity()
 export class Record {
 
     @PrimaryGeneratedColumn('uuid')
     id: string;
+
+    @ManyToOne(() => Category, (category) => category.records, { nullable: false })
+    category: Category; // Relación con la categoría
 
     @ManyToOne(() => User, (user) => user.id)
     user: User;

@@ -177,12 +177,13 @@ export const login = async (req: Request, res: Response) => {
       {
         id: user.id,
         username: user.username,
+        fullName: user.fullName,
         role: user.role,
         storeId,
         storeName,
       },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '12h' }
     );
 
     // Respuesta exitosa con el token

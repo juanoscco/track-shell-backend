@@ -11,9 +11,6 @@ export class Bag {
   @ManyToOne(() => Record, (record) => record.bags, { nullable: false })
   record: Record; // Relación con el movimiento
 
-  @ManyToOne(() => Category, { nullable: false })
-  category: Category; // Relación con la categoría
-
   @Column('int')
   quantity: number; // Cantidad del producto en la bolsa
 

@@ -5,6 +5,7 @@ import {
     createSaleRecord,
     getIncomeRecords,
     getOutputRecords,
+    getRecordById,
     getSaleRecords
 } from "../controllers/record.controller";
 
@@ -414,5 +415,55 @@ router.get('/output', getOutputRecords);
  *         description: Server error
  */
 router.get('/sale', getSaleRecords);
+
+/**
+ * @swagger
+ * /api/records/{id}:
+ *   get:
+ *     summary: Get record details by ID
+ *     tags: [Records]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the record to retrieve
+ *     responses:
+ *       200:
+ *         description: A record with detailed information, including associated bags
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: "123"
+ *                 date:
+ *                   type: string
+ *                   example: "2024-12-23T00:00:00.000Z"
+ *                 type:
+ *                   type: string
+ *                   example: "income"
+ *                 quantity:
+ *                   type: number
+ *                   example: 10
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 client:
+ *                   $ref: '#/components/schemas/Client'
+ *                 category:
+ *                   $ref: '#/components/schemas/Category'
+ *                 bags:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Bag'
+ *       404:
+ *         description: Record not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/:id', getRecordById);
 
 export default router;
