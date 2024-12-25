@@ -3,11 +3,13 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerDocs from './config/swagger-config';
 import cors from 'cors';
 
-import storeRoutes from './core/Store/routers/store.routes';
-import categoryRoutes from './core/Categories/routers/categories.routers';
-import recordRouter from './core/Records/routers/record.router';
-import userRoutes from './core/Users/routers/users.routes';
-import clientRouter from './core/Clients/routers/clients.routers';
+// Routers
+import storeRoutes from './modules/Store/routers/store.routes';
+import categoryRoutes from './modules/Categories/routers/categories.routers';
+import recordRouter from './modules/Records/routers/record.router';
+import userRoutes from './modules/Users/routers/users.routes';
+import clientRouter from './modules/Clients/routers/clients.routers';
+import bagRouter from './modules/Bag/routers/bag.router'
 
 const app = express();
 
@@ -25,6 +27,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/records', recordRouter);
-app.use('/api/clients', clientRouter)
+app.use('/api/clients', clientRouter);
+app.use('/api/bags', bagRouter);
 
 export default app;

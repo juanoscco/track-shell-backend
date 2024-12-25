@@ -117,6 +117,7 @@ const getRecordsByType = async (req: Request, res: Response, recordType: 'income
         const queryBuilder = recordRepo.createQueryBuilder('record')
             .leftJoinAndSelect('record.user', 'user')  // INNER JOIN con la entidad user
             .leftJoinAndSelect('record.client', 'client')  // INNER JOIN con la entidad client
+            .leftJoinAndSelect('record.category', 'category')  // Asegurarse de incluir la relación con category
             .where('record.type = :type', { type: recordType })
             .andWhere(
                 `TO_CHAR(record.date, 'YYYY-MM-DD') LIKE :search`,  // Convierte la fecha a cadena y compara

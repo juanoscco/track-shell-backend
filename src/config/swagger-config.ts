@@ -31,12 +31,12 @@ const swaggerConfig = {
     ],
   },
   apis: [
-    './src/core/Users/routers/*.ts',   // Rutas de usuarios
-    './src/core/Store/routers/*.ts',   // Rutas de tiendas 
-    './src/core/Categories/routers/*.ts',   // Rutas de categorias
-    './src/core/Records/routers/*.ts',
-    './src/core/Clients/routers/*.ts'
-
+    './src/modules/Users/routers/*.ts',   // Rutas de usuarios
+    './src/modules/Store/routers/*.ts',   // Rutas de tiendas 
+    './src/modules/Categories/routers/*.ts',   // Rutas de categorias
+    './src/modules/Records/routers/*.ts',
+    './src/modules/Clients/routers/*.ts',
+    './src/modules/Bag/routers/*.ts'
   ],
 };
 

@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Record } from './Records';
-import { Category } from './Categories';
 
 @Entity()
 export class Bag {
