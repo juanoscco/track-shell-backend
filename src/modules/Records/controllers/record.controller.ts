@@ -85,7 +85,7 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
 
                 if (requestedQuantity > availableQuantity) {
                     return res.status(400).json({
-                        message: `Insufficient quantity for item with sph: ${sph} and cyl: ${cyl}. Available: ${availableQuantity}, Requested: ${requestedQuantity}.`
+                        message: `Insufficient quantity for item with sph: ${sph} and cyl: ${cyl}.`
                     });
                 }
 
