@@ -34,16 +34,9 @@ const router = Router();
  * @swagger
  * /api/bags:
  *   get:
- *     summary: Get all bags with optional filters for date and categoryId
+ *     summary: Get all bags with optional filter for categoryId
  *     tags: [Bags]
  *     parameters:
- *       - in: query
- *         name: date
- *         required: false
- *         schema:
- *           type: string
- *           format: date
- *         description: The date to filter bags by (in YYYY-MM-DD format).
  *       - in: query
  *         name: categoryId
  *         required: false
@@ -52,7 +45,7 @@ const router = Router();
  *         description: The category ID to filter bags by.
  *     responses:
  *       200:
- *         description: A list of bags filtered by date and/or category
+ *         description: A list of bags filtered by categoryId
  *         content:
  *           application/json:
  *             schema:

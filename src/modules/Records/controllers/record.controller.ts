@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import AppDataSource from "../../../ormconfig";
-import { Record } from '../../../models/Records';
+import { Record as TransactionRecord } from '../../../models/Records';
 import { Bag } from '../../../models/Bag';
 import { User } from '../../../models/User';
 import { Client } from '../../../models/Clients';
@@ -33,7 +33,7 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
     }
 
     try {
-        const recordRepo = AppDataSource.getRepository(Record);
+        const recordRepo = AppDataSource.getRepository(TransactionRecord);
         const userRepo = AppDataSource.getRepository(User);
         const clientRepo = AppDataSource.getRepository(Client);
         const categoryRepo = AppDataSource.getRepository(Category);
@@ -56,6 +56,42 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
 
         if (!category) {
             return res.status(404).json({ message: 'Category not found.' });  // Manejo de error si no se encuentra la categoría
+        }
+
+        if (recordType !== 'income') {
+            // Validar disponibilidad de los bags para operaciones de 'sale' o 'output'
+            const availableBags = await bagRepo.createQueryBuilder('bag')
+                .leftJoinAndSelect('bag.record', 'record')
+                .leftJoinAndSelect('record.category', 'category') // Asegurarte de incluir la relación con Category
+                .where('record.category = :categoryId', { categoryId }) // Filtrar por categoría
+                .andWhere('record.type = :type', { type: 'income' }) // Solo considerar registros de tipo ingreso
+                .getMany();
+
+            // Consolidar las cantidades disponibles por sph y cyl
+            const availableMap: Record<string, number> = {};
+            availableBags.forEach(bagItem => {
+                const key = `${bagItem.sph}-${bagItem.cyl}`; // Crear un identificador único para cada combinación de sph y cyl
+                if (!availableMap[key]) {
+                    availableMap[key] = 0;
+                }
+                availableMap[key] += bagItem.quantity; // Sumar la cantidad disponible
+            });
+
+            // Verificar si los bags solicitados están disponibles
+            for (const bagItem of bag) {
+                const { sph, cyl, quantity: requestedQuantity } = bagItem;
+                const key = `${sph}-${cyl}`;
+                const availableQuantity = availableMap[key] || 0;
+
+                if (requestedQuantity > availableQuantity) {
+                    return res.status(400).json({
+                        message: `Insufficient quantity for item with sph: ${sph} and cyl: ${cyl}. Available: ${availableQuantity}, Requested: ${requestedQuantity}.`
+                    });
+                }
+
+                // Reducir la cantidad disponible en el mapa para evitar duplicados
+                availableMap[key] -= requestedQuantity;
+            }
         }
 
         // Crear registro
@@ -111,7 +147,7 @@ const getRecordsByType = async (req: Request, res: Response, recordType: 'income
         const pageNumber = Number(page);
         const pageSize = Number(limit);
 
-        const recordRepo = AppDataSource.getRepository(Record);
+        const recordRepo = AppDataSource.getRepository(TransactionRecord);
 
         // Usando QueryBuilder para hacer INNER JOIN con user y client por fullname
         const queryBuilder = recordRepo.createQueryBuilder('record')
@@ -165,7 +201,7 @@ export const getRecordById = async (req: Request, res: Response): Promise<any> =
     const { id } = req.params; // Obtener el ID de la URL
 
     try {
-        const recordRepo = AppDataSource.getRepository(Record);
+        const recordRepo = AppDataSource.getRepository(TransactionRecord);
 
         // Usar QueryBuilder para obtener el registro por ID, con JOIN a la tabla Bag
         const record = await recordRepo.createQueryBuilder('record')
