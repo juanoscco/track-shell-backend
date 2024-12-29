@@ -27,36 +27,30 @@ const router = Router();
  *               date:
  *                 type: string
  *                 format: date-time
- *               type:
- *                 type: string
- *                 enum:
- *                   - income
- *                   - output
- *                   - sale
  *               userId:
- *                 type: string
+ *                 type: integer
  *               clientId:
- *                 type: string
+ *                 type: integer
+ *               categoryId:
+ *                 type: integer
  *               bags:
  *                 type: array
  *                 items:
  *                   type: object
  *                   properties:
- *                     categoryId:
- *                       type: integer
  *                     quantity:
  *                       type: integer
  *                     sph:
- *                       type: number
- *                       format: float
+ *                       type: integer
+ *                       description: ID of the SPH record
  *                     cyl:
- *                       type: number
- *                       format: float
+ *                       type: integer
+ *                       description: ID of the CYL record
  *     responses:
  *       201:
  *         description: Record created successfully
  *       400:
- *         description: Missing required fields
+ *         description: Missing required fields or insufficient quantity
  *       500:
  *         description: Error creating record
  */
@@ -78,36 +72,30 @@ router.post('/income', createIncomeRecord);
  *               date:
  *                 type: string
  *                 format: date-time
- *               type:
- *                 type: string
- *                 enum:
- *                   - income
- *                   - output
- *                   - sale
  *               userId:
- *                 type: string
+ *                 type: integer
  *               clientId:
- *                 type: string
+ *                 type: integer
+ *               categoryId:
+ *                 type: integer
  *               bags:
  *                 type: array
  *                 items:
  *                   type: object
  *                   properties:
- *                     categoryId:
- *                       type: integer
  *                     quantity:
  *                       type: integer
  *                     sph:
- *                       type: number
- *                       format: float
+ *                       type: integer
+ *                       description: ID of the SPH record
  *                     cyl:
- *                       type: number
- *                       format: float
+ *                       type: integer
+ *                       description: ID of the CYL record
  *     responses:
  *       201:
  *         description: Record created successfully
  *       400:
- *         description: Missing required fields
+ *         description: Missing required fields or insufficient quantity
  *       500:
  *         description: Error creating record
  */
@@ -129,36 +117,30 @@ router.post('/output', createOutputRecord);
  *               date:
  *                 type: string
  *                 format: date-time
- *               type:
- *                 type: string
- *                 enum:
- *                   - income
- *                   - output
- *                   - sale
  *               userId:
- *                 type: string
+ *                 type: integer
  *               clientId:
- *                 type: string
+ *                 type: integer
+ *               categoryId:
+ *                 type: integer
  *               bags:
  *                 type: array
  *                 items:
  *                   type: object
  *                   properties:
- *                     categoryId:
- *                       type: integer
  *                     quantity:
  *                       type: integer
  *                     sph:
- *                       type: number
- *                       format: float
+ *                       type: integer
+ *                       description: ID of the SPH record
  *                     cyl:
- *                       type: number
- *                       format: float
+ *                       type: integer
+ *                       description: ID of the CYL record
  *     responses:
  *       201:
  *         description: Record created successfully
  *       400:
- *         description: Missing required fields
+ *         description: Missing required fields or insufficient quantity
  *       500:
  *         description: Error creating record
  */

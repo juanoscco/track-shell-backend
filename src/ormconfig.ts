@@ -6,6 +6,8 @@ import { Category } from './models/Categories';
 import { Client } from './models/Clients';
 import { Record } from './models/Records';
 import { Bag } from './models/Bag';
+import { SPH } from './models/Sph';
+import { CYL } from './models/Cyl';
 
 // Cargar variables de entorno
 config();
@@ -19,7 +21,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: process.env.DB_SYNCHRONIZE === 'true',
   logging: process.env.DB_LOGGING === 'true',
-  entities: [User, Store, Category, Client, Record, Bag],
+  entities: [User, Store, Category, Client, Record, Bag, SPH, CYL],
   migrations: [],
   subscribers: [],
 });

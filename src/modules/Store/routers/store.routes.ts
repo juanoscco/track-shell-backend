@@ -104,6 +104,6 @@ router.get('/', authenticateToken, getStores);
  *       500:
  *         description: Error creating store
  */
-router.post('/', authenticateToken, createStore);
+router.post('/', createStore);
 
 export default router;

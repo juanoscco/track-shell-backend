@@ -6,6 +6,8 @@ import { User } from '../../../models/User';
 import { Client } from '../../../models/Clients';
 import { Category } from '../../../models/Categories';
 import { Like, Between } from 'typeorm';
+import { SPH } from '../../../models/Sph';
+import { CYL } from '../../../models/Cyl';
 
 
 // Crear registro para tipo 'income'
@@ -23,11 +25,9 @@ export const createSaleRecord = async (req: Request, res: Response): Promise<any
     return createRecordByType(req, res, 'sale');
 };
 
-
 const createRecordByType = async (req: Request, res: Response, recordType: 'income' | 'output' | 'sale'): Promise<any> => {
-    const { date, quantity, userId, clientId, categoryId, bag } = req.body;  // Asegúrate de incluir categoryId en el cuerpo de la solicitud
+    const { date, quantity, userId, clientId, categoryId, bag } = req.body;
 
-    // Validación de campos requeridos
     if (!date || !quantity || !userId || !clientId || !categoryId || !bag) {
         return res.status(400).json({ message: 'Missing required fields.' });
     }
@@ -38,79 +38,96 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
         const clientRepo = AppDataSource.getRepository(Client);
         const categoryRepo = AppDataSource.getRepository(Category);
         const bagRepo = AppDataSource.getRepository(Bag);
+        const sphRepo = AppDataSource.getRepository(SPH);
+        const cylRepo = AppDataSource.getRepository(CYL);
 
-        // Verificar usuario y cliente en paralelo para optimizar consultas
         const [user, client, category] = await Promise.all([
             userRepo.findOne({ where: { id: userId } }),
             clientRepo.findOne({ where: { id: clientId } }),
-            categoryRepo.findOne({ where: { id: categoryId } }),  // Verificar que la categoría exista
+            categoryRepo.findOne({ where: { id: categoryId } }),
         ]);
 
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+        if (!client) return res.status(404).json({ message: 'Client not found.' });
+        if (!category) return res.status(404).json({ message: 'Category not found.' });
 
-        if (!client) {
-            return res.status(404).json({ message: 'Client not found.' });
-        }
-
-        if (!category) {
-            return res.status(404).json({ message: 'Category not found.' });  // Manejo de error si no se encuentra la categoría
-        }
-
+        // Si el tipo no es "income", debemos verificar las bolsas disponibles
         if (recordType !== 'income') {
-            // Validar disponibilidad de los bags para operaciones de 'sale' o 'output'
-            const availableBags = await bagRepo.createQueryBuilder('bag')
+            const bags = await bagRepo.createQueryBuilder('bag')
                 .leftJoinAndSelect('bag.record', 'record')
-                .leftJoinAndSelect('record.category', 'category') // Asegurarte de incluir la relación con Category
-                .where('record.category = :categoryId', { categoryId }) // Filtrar por categoría
-                .andWhere('record.type = :type', { type: 'income' }) // Solo considerar registros de tipo ingreso
+                .leftJoinAndSelect('record.category', 'category')
+                .leftJoinAndSelect('bag.sph', 'sph')
+                .leftJoinAndSelect('bag.cyl', 'cyl')
+                .where('record.categoryId = :categoryId', { categoryId })
+                .andWhere('record.type = :type', { type: 'income' })
                 .getMany();
 
-            // Consolidar las cantidades disponibles por sph y cyl
-            const availableMap: Record<string, number> = {};
-            availableBags.forEach(bagItem => {
-                const key = `${bagItem.sph}-${bagItem.cyl}`; // Crear un identificador único para cada combinación de sph y cyl
-                if (!availableMap[key]) {
-                    availableMap[key] = 0;
+            const bagQuantities: Record<string, { sph: any; cyl: any; income: number; consumed: number }> = {};
+
+            // Consolidamos las cantidades de bolsas
+            bags.forEach(bag => {
+                const sph = bag.sph;
+                const cyl = bag.cyl;
+                const key = `${sph.id}-${cyl.id}`;
+
+                if (!bagQuantities[key]) {
+                    bagQuantities[key] = {
+                        sph,
+                        cyl,
+                        income: 0,
+                        consumed: 0,
+                    };
                 }
-                availableMap[key] += bagItem.quantity; // Sumar la cantidad disponible
+
+                if (bag.record.type === 'income') {
+                    bagQuantities[key].income += bag.quantity;
+                } else if (['sale', 'output'].includes(bag.record.type)) {
+                    bagQuantities[key].consumed += bag.quantity;
+                }
             });
 
-            // Verificar si los bags solicitados están disponibles
+            // Verificamos si hay suficientes elementos disponibles
             for (const bagItem of bag) {
-                const { sph, cyl, quantity: requestedQuantity } = bagItem;
-                const key = `${sph}-${cyl}`;
-                const availableQuantity = availableMap[key] || 0;
+                const { sphId, cylId, quantity: requestedQuantity } = bagItem;
+                const key = `${sphId}-${cylId}`;
+                const availableQuantity = (bagQuantities[key]?.income || 0) - (bagQuantities[key]?.consumed || 0);
 
                 if (requestedQuantity > availableQuantity) {
                     return res.status(400).json({
-                        message: `Insufficient quantity for item with sph: ${sph} and cyl: ${cyl}.`
+                        message: `Insufficient quantity for item with sphId: ${sphId} and cylId: ${cylId}.`
                     });
                 }
 
-                // Reducir la cantidad disponible en el mapa para evitar duplicados
-                availableMap[key] -= requestedQuantity;
+                // Actualizamos la cantidad disponible después de la venta
+                bagQuantities[key].consumed += requestedQuantity;
             }
         }
 
-        // Crear registro
+        // Creamos el nuevo registro
         const record = recordRepo.create({
             date: new Date(date),
             type: recordType,
             quantity,
             user,
             client,
-            category,  // Asegúrate de pasar la categoría al crear el registro
+            category,
         });
 
         const savedRecord = await recordRepo.save(record);
 
-        // Procesar la bolsa en paralelo
-        const bags = await Promise.all(bag.map(async (bagItem: any) => {
-            const { quantity, sph, cyl } = bagItem;
+        const bags = [];
+        for (const bagItem of bag) {
+            const { quantity, sphId, cylId } = bagItem;
 
-            // Crear y guardar la bolsa asociada a este registro
+            const sph = await sphRepo.findOne({ where: { id: sphId } });
+            const cyl = await cylRepo.findOne({ where: { id: cylId } });
+
+            if (!sph || !cyl) {
+                return res.status(400).json({
+                    message: `Invalid SPH or CYL reference: sphId=${sphId}, cylId=${cylId}`
+                });
+            }
+
             const bagEntity = bagRepo.create({
                 quantity,
                 sph,
@@ -118,24 +135,19 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
                 record: savedRecord
             });
 
-            return await bagRepo.save(bagEntity);
-        }));
+            const savedBag = await bagRepo.save(bagEntity);
+            bags.push(savedBag);
+        }
 
-        // Devolver el registro creado con las bolsas
         return res.status(201).json({
             ...savedRecord,
             bags
         });
     } catch (error: any) {
         console.error(error);
-
-        // Mejor manejo de error, mostrando el error completo y detalles de la causa
-        const errorMessage = error?.message || 'Error creating record.';
-        const errorStack = error?.stack || '';
-
         return res.status(500).json({
-            message: errorMessage,
-            stack: errorStack // Opcional, solo para facilitar la depuración
+            message: error.message || 'Error creating record.',
+            stack: error.stack || '',
         });
     }
 };

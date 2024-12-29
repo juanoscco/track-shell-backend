@@ -36,7 +36,9 @@ const swaggerConfig = {
     './src/modules/Categories/routers/*.ts',   // Rutas de categorias
     './src/modules/Records/routers/*.ts',
     './src/modules/Clients/routers/*.ts',
-    './src/modules/Bag/routers/*.ts'
+    './src/modules/Bag/routers/*.ts',
+    './src/modules/Cyl/routers/*.ts',
+    './src/modules/Sph/routers/*.ts',
   ],
 };
 

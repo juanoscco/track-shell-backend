@@ -1,9 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from 'typeorm';
 import { Record } from './Records';
+import { SPH } from './Sph';
+import { CYL } from './Cyl';
 
 @Entity()
 export class Bag {
-  
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -13,9 +14,9 @@ export class Bag {
   @Column('int')
   quantity: number; // Cantidad del producto en la bolsa
 
-  @Column('decimal', { precision: 4, scale: 2 })
-  sph: number; // Campo SPH, ejemplo: 1.25
+  @ManyToOne(() => SPH, { nullable: false })
+  sph: SPH; // Relación con la tabla SPH
 
-  @Column('decimal', { precision: 4, scale: 2 })
-  cyl: number; // Campo CYL, ejemplo: 1.25
+  @ManyToOne(() => CYL, { nullable: false })
+  cyl: CYL; // Relación con la tabla CYL
 }

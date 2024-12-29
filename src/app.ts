@@ -9,7 +9,9 @@ import categoryRoutes from './modules/Categories/routers/categories.routers';
 import recordRouter from './modules/Records/routers/record.router';
 import userRoutes from './modules/Users/routers/users.routes';
 import clientRouter from './modules/Clients/routers/clients.routers';
-import bagRouter from './modules/Bag/routers/bag.router'
+import bagRouter from './modules/Bag/routers/bag.router';
+import cylRouter from './modules/Cyl/routers/cyl.router';
+import sphRouter from './modules/Sph/routers/sph.router';
 
 const app = express();
 
@@ -29,5 +31,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/records', recordRouter);
 app.use('/api/clients', clientRouter);
 app.use('/api/bags', bagRouter);
+app.use('/api/cyl', cylRouter);
+app.use('/api/sph', sphRouter);
 
 export default app;
