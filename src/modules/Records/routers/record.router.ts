@@ -6,7 +6,10 @@ import {
     getIncomeRecords,
     getOutputRecords,
     getRecordById,
-    getSaleRecords
+    getSaleRecords,
+    updateIncomeRecord,
+    updateOutputRecord,
+    updateSaleRecord
 } from "../controllers/record.controller";
 
 const router = Router();
@@ -240,7 +243,7 @@ router.post('/sale', createSaleRecord);
  * @swagger
  * /api/records/income:
  *   get:
- *     summary: Get all income records
+ *     summary: Get all income records for the authenticated user
  *     tags: [Records]
  *     parameters:
  *       - in: query
@@ -256,14 +259,20 @@ router.post('/sale', createSaleRecord);
  *           example: 10
  *         description: Number of records per page
  *       - in: query
- *         name: search
+ *         name: date
  *         schema:
  *           type: string
- *           example: "lens"
- *         description: Search term for filtering by category name
+ *           example: "2025-01-01"
+ *         description: Filter records by date (YYYY-MM-DD format)
+ *       - in: query
+ *         name: user
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: User ID to filter records for a specific user (default is 1)
  *     responses:
  *       200:
- *         description: A list of income records with pagination
+ *         description: A list of income records for the authenticated user with pagination
  *         content:
  *           application/json:
  *             schema:
@@ -285,6 +294,8 @@ router.post('/sale', createSaleRecord);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Record'
+ *       401:
+ *         description: Unauthorized. User not authenticated.
  *       500:
  *         description: Server error
  */
@@ -294,7 +305,7 @@ router.get('/income', getIncomeRecords);
  * @swagger
  * /api/records/output:
  *   get:
- *     summary: Get all output records
+ *     summary: Get all output records for the authenticated user
  *     tags: [Records]
  *     parameters:
  *       - in: query
@@ -310,14 +321,20 @@ router.get('/income', getIncomeRecords);
  *           example: 10
  *         description: Number of records per page
  *       - in: query
- *         name: search
+ *         name: date
  *         schema:
  *           type: string
- *           example: "lens"
- *         description: Search term for filtering by category name
+ *           example: "2025-01-01"
+ *         description: Filter records by date (YYYY-MM-DD format)
+ *       - in: query
+ *         name: user
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: User ID to filter records for a specific user (default is 1)
  *     responses:
  *       200:
- *         description: A list of output records with pagination
+ *         description: A list of output records for the authenticated user with pagination
  *         content:
  *           application/json:
  *             schema:
@@ -339,6 +356,8 @@ router.get('/income', getIncomeRecords);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Record'
+ *       401:
+ *         description: Unauthorized. User not authenticated.
  *       500:
  *         description: Server error
  */
@@ -348,7 +367,7 @@ router.get('/output', getOutputRecords);
  * @swagger
  * /api/records/sale:
  *   get:
- *     summary: Get all sale records
+ *     summary: Get all sale records for the authenticated user
  *     tags: [Records]
  *     parameters:
  *       - in: query
@@ -364,14 +383,20 @@ router.get('/output', getOutputRecords);
  *           example: 10
  *         description: Number of records per page
  *       - in: query
- *         name: search
+ *         name: date
  *         schema:
  *           type: string
- *           example: "lens"
- *         description: Search term for filtering by category name
+ *           example: "2025-01-01"
+ *         description: Filter records by date (YYYY-MM-DD format)
+ *       - in: query
+ *         name: user
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: User ID to filter records for a specific user (default is 1)
  *     responses:
  *       200:
- *         description: A list of sale records with pagination
+ *         description: A list of sale records for the authenticated user with pagination
  *         content:
  *           application/json:
  *             schema:
@@ -393,6 +418,8 @@ router.get('/output', getOutputRecords);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Record'
+ *       401:
+ *         description: Unauthorized. User not authenticated.
  *       500:
  *         description: Server error
  */
@@ -447,5 +474,165 @@ router.get('/sale', getSaleRecords);
  *         description: Server error
  */
 router.get('/:id', getRecordById);
+
+
+/**
+ * @swagger
+ * /api/records/income/{id}:
+ *   patch:
+ *     summary: Update an income record
+ *     tags:
+ *       - Records
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the income record to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               quantity:
+ *                 type: number
+ *               clientId:
+ *                 type: integer
+ *               categoryId:
+ *                 type: integer
+ *               bag:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     sphId:
+ *                       type: integer
+ *                     cylId:
+ *                       type: integer
+ *                     quantity:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Successfully updated the income record
+ *       400:
+ *         description: Bad Request
+ *       404:
+ *         description: Record not found
+ *       500:
+ *         description: Internal server error
+ */
+router.patch('/income/:id', updateIncomeRecord);
+
+/**
+ * @swagger
+ * /api/records/output/{id}:
+ *   patch:
+ *     summary: Update an output record
+ *     tags:
+ *       - Records
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the output record to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               quantity:
+ *                 type: number
+ *               clientId:
+ *                 type: integer
+ *               categoryId:
+ *                 type: integer
+ *               bag:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     sphId:
+ *                       type: integer
+ *                     cylId:
+ *                       type: integer
+ *                     quantity:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Successfully updated the output record
+ *       400:
+ *         description: Bad Request
+ *       404:
+ *         description: Record not found
+ *       500:
+ *         description: Internal server error
+ */
+router.patch('/output/:id', updateOutputRecord);
+
+/**
+ * @swagger
+ * /api/records/sale/{id}:
+ *   patch:
+ *     summary: Update a sale record
+ *     tags:
+ *       - Records
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the sale record to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               quantity:
+ *                 type: number
+ *               clientId:
+ *                 type: integer
+ *               categoryId:
+ *                 type: integer
+ *               bag:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     sphId:
+ *                       type: integer
+ *                     cylId:
+ *                       type: integer
+ *                     quantity:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Successfully updated the sale record
+ *       400:
+ *         description: Bad Request
+ *       404:
+ *         description: Record not found
+ *       500:
+ *         description: Internal server error
+ */
+router.patch('/sale/:id', updateSaleRecord);
 
 export default router;
