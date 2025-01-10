@@ -9,7 +9,8 @@ import {
     getSaleRecords,
     updateIncomeRecord,
     updateOutputRecord,
-    updateSaleRecord
+    updateSaleRecord,
+    deleteRecordById
 } from "../controllers/record.controller";
 
 const router = Router();
@@ -17,45 +18,62 @@ const router = Router();
 /**
  * @swagger
  * /api/records/income:
- *   post:
- *     summary: Create a new income record
+ *   get:
+ *     summary: Get all income records for the authenticated user
  *     tags: [Records]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               date:
- *                 type: string
- *                 format: date-time
- *               userId:
- *                 type: integer
- *               clientId:
- *                 type: integer
- *               categoryId:
- *                 type: integer
- *               bags:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     quantity:
- *                       type: integer
- *                     sph:
- *                       type: integer
- *                       description: ID of the SPH record
- *                     cyl:
- *                       type: integer
- *                       description: ID of the CYL record
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *         description: Number of records per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           example: "Sunglasses"
+ *         description: Search term to filter records by a specific keyword
+ *       - in: query
+ *         name: user
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: User ID to filter records for a specific user (default is 1)
  *     responses:
- *       201:
- *         description: Record created successfully
- *       400:
- *         description: Missing required fields or insufficient quantity
+ *       200:
+ *         description: A list of income records for the authenticated user with pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                   example: 100
+ *                 currentPage:
+ *                   type: integer
+ *                   example: 1
+ *                 pageSize:
+ *                   type: integer
+ *                   example: 10
+ *                 totalPages:
+ *                   type: integer
+ *                   example: 10
+ *                 records:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Record'
+ *       401:
+ *         description: Unauthorized. User not authenticated.
  *       500:
- *         description: Error creating record
+ *         description: Server error
  */
 router.post('/income', createIncomeRecord);
 
@@ -270,6 +288,18 @@ router.post('/sale', createSaleRecord);
  *           type: integer
  *           example: 1
  *         description: User ID to filter records for a specific user (default is 1)
+ *       - in: query
+ *         name: clientId
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Filter records by client ID
+ *       - in: query
+ *         name: categoryId
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *         description: Filter records by category ID
  *     responses:
  *       200:
  *         description: A list of income records for the authenticated user with pagination
@@ -321,11 +351,11 @@ router.get('/income', getIncomeRecords);
  *           example: 10
  *         description: Number of records per page
  *       - in: query
- *         name: date
+ *         name: search
  *         schema:
  *           type: string
- *           example: "2025-01-01"
- *         description: Filter records by date (YYYY-MM-DD format)
+ *           example: "Sunglasses"
+ *         description: Search term to filter records by a specific keyword
  *       - in: query
  *         name: user
  *         schema:
@@ -383,11 +413,11 @@ router.get('/output', getOutputRecords);
  *           example: 10
  *         description: Number of records per page
  *       - in: query
- *         name: date
+ *         name: search
  *         schema:
  *           type: string
- *           example: "2025-01-01"
- *         description: Filter records by date (YYYY-MM-DD format)
+ *           example: "Sunglasses"
+ *         description: Search term to filter records by a specific keyword
  *       - in: query
  *         name: user
  *         schema:
@@ -474,7 +504,6 @@ router.get('/sale', getSaleRecords);
  *         description: Server error
  */
 router.get('/:id', getRecordById);
-
 
 /**
  * @swagger
@@ -634,5 +663,31 @@ router.patch('/output/:id', updateOutputRecord);
  *         description: Internal server error
  */
 router.patch('/sale/:id', updateSaleRecord);
+
+/**
+ * @swagger
+ * /api/records/{id}:
+ *   delete:
+ *     summary: Elimina un registro y desactiva sus bolsas relacionadas
+ *     tags: [Records]
+ *     description: Cambia el campo `isActive` a false para el registro y sus bolsas relacionadas.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID del registro a eliminar.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Registro y bolsas desactivados correctamente.
+ *       400:
+ *         description: Faltan campos requeridos o ID inválido.
+ *       404:
+ *         description: Registro no encontrado.
+ *       500:
+ *         description: Error al desactivar el registro o las bolsas.
+ */
+router.delete('/:id', deleteRecordById);
 
 export default router;

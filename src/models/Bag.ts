@@ -14,9 +14,15 @@ export class Bag {
   @Column('int')
   quantity: number; // Cantidad del producto en la bolsa
 
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  unitPrice?: number; // Precio por unidad del producto (opcional, formato moneda)
+
   @ManyToOne(() => SPH, { nullable: false })
   sph: SPH; // Relación con la tabla SPH
 
   @ManyToOne(() => CYL, { nullable: false })
   cyl: CYL; // Relación con la tabla CYL
+
+  @Column('boolean', { default: true })
+  isActive: boolean; // Indica si la bolsa está activa
 }

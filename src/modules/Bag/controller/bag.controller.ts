@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import AppDataSource from '../../../ormconfig';
 import { Bag } from '../../../models/Bag';
+import { Record as TransactionRecord } from '../../../models/Records';
 
 
 export const getAllBags = async (req: Request, res: Response) => {
@@ -8,6 +9,7 @@ export const getAllBags = async (req: Request, res: Response) => {
         const { categoryId } = req.query; // Parámetro opcional de categoría
 
         const bagRepository = AppDataSource.getRepository(Bag);
+        const recordRepository = AppDataSource.getRepository(TransactionRecord); // Para consultar los registros
 
         // Construir la consulta con QueryBuilder
         const queryBuilder = bagRepository.createQueryBuilder('bag')
@@ -25,7 +27,7 @@ export const getAllBags = async (req: Request, res: Response) => {
         const bags = await queryBuilder.getMany();
 
         // Crear un mapa para consolidar ingresos y consumos
-        const bagQuantities: Record<string, { sph: any; cyl: any; income: number; consumed: number }> = {};
+        const bagQuantities: Record<string, { sph: any; cyl: any; income: number; consumed: number; quantity: number }> = {};
 
         bags.forEach((bag) => {
             const sph = bag.sph; // Objeto completo de SPH
@@ -39,15 +41,36 @@ export const getAllBags = async (req: Request, res: Response) => {
                     cyl,
                     income: 0, // Cantidad ingresada
                     consumed: 0, // Cantidad consumida
+                    quantity: 0, // Cantidad total de la bolsa
                 };
             }
 
             // Registrar las cantidades según el tipo de registro
             if (bag.record.type === 'income') {
                 bagQuantities[key].income += bag.quantity;
+                bagQuantities[key].quantity += bag.quantity; // Actualizar cantidad de la bolsa
             } else if (['sale', 'output'].includes(bag.record.type)) {
                 bagQuantities[key].consumed += bag.quantity;
             }
+        });
+
+        // Revisar los registros de tipo 'income' que se han eliminado
+        const deletedRecords = await recordRepository.find({
+            where: { type: 'income', isActive: false },
+        });
+
+        deletedRecords.forEach((record) => {
+            record.bags.forEach((bag) => {
+                const sph = bag.sph;
+                const cyl = bag.cyl;
+                const key = `${sph.id}-${cyl.id}`;
+
+                // Si la bolsa tiene una relación con un registro 'income' eliminado, revertir la cantidad
+                if (bagQuantities[key]) {
+                    bagQuantities[key].income -= bag.quantity;
+                    bagQuantities[key].quantity -= bag.quantity; // Actualizar la cantidad de la bolsa
+                }
+            });
         });
 
         // Consolidar bolsas disponibles y calcular el total
@@ -55,7 +78,7 @@ export const getAllBags = async (req: Request, res: Response) => {
         let totalQuantity = 0;
 
         for (const key in bagQuantities) {
-            const { sph, cyl, income, consumed } = bagQuantities[key];
+            const { sph, cyl, income, consumed, quantity } = bagQuantities[key];
             const availableQuantity = income - consumed; // Calcular cantidad disponible
 
             if (availableQuantity > 0) {
@@ -79,7 +102,6 @@ export const getAllBags = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Error retrieving bags', error });
     }
 };
-
 
 // Obtener una bolsa por su ID
 export const getBagById = async (req: Request, res: Response): Promise<void> => {

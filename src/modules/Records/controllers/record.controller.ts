@@ -7,6 +7,7 @@ import { Client } from '../../../models/Clients';
 import { Category } from '../../../models/Categories';
 import { SPH } from '../../../models/Sph';
 import { CYL } from '../../../models/Cyl';
+import { In } from 'typeorm';
 
 
 // Crear registro para tipo 'income'
@@ -24,7 +25,7 @@ export const createSaleRecord = async (req: Request, res: Response): Promise<any
 };
 
 const createRecordByType = async (req: Request, res: Response, recordType: 'income' | 'output' | 'sale'): Promise<any> => {
-    const { date, quantity, userId, clientId, categoryId, bag } = req.body;
+    const { date, quantity, userId, clientId, categoryId, bag, totalPrice = 0 } = req.body;
 
     if (!date || !quantity || !userId || !clientId || !categoryId || !bag) {
         return res.status(400).json({ message: 'Missing required fields.' });
@@ -49,7 +50,7 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
         if (!client) return res.status(404).json({ message: 'Client not found.' });
         if (!category) return res.status(404).json({ message: 'Category not found.' });
 
-        // Si el tipo no es "income", debemos verificar las bolsas disponibles
+        // Verificación de bolsas solo si el tipo no es "income"
         if (recordType !== 'income') {
             const bags = await bagRepo.createQueryBuilder('bag')
                 .leftJoinAndSelect('bag.record', 'record')
@@ -62,7 +63,6 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
 
             const bagQuantities: Record<string, { sph: any; cyl: any; income: number; consumed: number }> = {};
 
-            // Consolidamos las cantidades de bolsas
             bags.forEach(bag => {
                 const sph = bag.sph;
                 const cyl = bag.cyl;
@@ -84,7 +84,6 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
                 }
             });
 
-            // Verificamos si hay suficientes elementos disponibles
             for (const bagItem of bag) {
                 const { sphId, cylId, quantity: requestedQuantity } = bagItem;
                 const key = `${sphId}-${cylId}`;
@@ -96,7 +95,6 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
                     });
                 }
 
-                // Actualizamos la cantidad disponible después de la venta
                 bagQuantities[key].consumed += requestedQuantity;
             }
         }
@@ -109,13 +107,14 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
             user,
             client,
             category,
+            totalPrice: recordType === 'sale' ? totalPrice : undefined,
         });
 
         const savedRecord = await recordRepo.save(record);
 
         const bags = [];
         for (const bagItem of bag) {
-            const { quantity, sphId, cylId } = bagItem;
+            const { quantity, sphId, cylId, unitPrice = 0 } = bagItem;
 
             const sph = await sphRepo.findOne({ where: { id: sphId } });
             const cyl = await cylRepo.findOne({ where: { id: cylId } });
@@ -130,7 +129,8 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
                 quantity,
                 sph,
                 cyl,
-                record: savedRecord
+                record: savedRecord,
+                unitPrice: recordType === 'sale' ? unitPrice : undefined,
             });
 
             const savedBag = await bagRepo.save(bagEntity);
@@ -139,7 +139,11 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
 
         return res.status(201).json({
             ...savedRecord,
-            bags
+            bags: bags.map(b => ({
+                ...b,
+                unitPrice: b.unitPrice || 0, // Aseguramos que unitPrice aparezca en el JSON
+            })),
+            totalPrice: savedRecord.totalPrice || 0, // Aseguramos que totalPrice aparezca en el JSON
         });
     } catch (error: any) {
         console.error(error);
@@ -150,7 +154,7 @@ const createRecordByType = async (req: Request, res: Response, recordType: 'inco
     }
 };
 
-
+// 
 const getRecordsByType = async (
     req: Request,
     res: Response,
@@ -158,7 +162,7 @@ const getRecordsByType = async (
 ): Promise<any> => {
     try {
         // Extrae los parámetros de la consulta (query params)
-        const { page = 1, limit = 10, date = '', user = 1 } = req.query;
+        const { page = 1, limit = 10, search = '', user = 1 } = req.query;
 
         // Convierte los valores de página y límite a números
         const pageNumber = Number(page);
@@ -178,14 +182,22 @@ const getRecordsByType = async (
             .innerJoinAndSelect('record.bags', 'bag') // INNER JOIN con la entidad Bag
             .innerJoinAndSelect('bag.sph', 'sph') // INNER JOIN con la tabla SPH
             .innerJoinAndSelect('bag.cyl', 'cyl') // INNER JOIN con la tabla CYL
-            .where('record.type = :type', { type: recordType }) // Filtro por tipo
+            .where('record.type = :type', { type: recordType }) // Filtro principal por tipo
             .andWhere('record.userId = :userId', { userId }) // Filtro por ID del usuario
             .andWhere(
-                `TO_CHAR(record.date, 'YYYY-MM-DD') LIKE :search`, // Filtro por fecha
-                { search: `%${date}%` }
-            )
+                search
+                    ? `(
+                        TO_CHAR(record.date, 'YYYY-MM-DD') LIKE :search 
+                        OR client.fullName LIKE :search 
+                        OR category.name LIKE :search
+                        OR CAST(record.type AS TEXT) LIKE :search
+                    )`
+                    : '1=1',
+                { search: `%${search}%` }
+            ) // Filtro por búsqueda general
             .skip((pageNumber - 1) * pageSize) // Paginación: registros a saltar
-            .take(pageSize); // Paginación: límite de registros por página
+            .take(pageSize) // Paginación: límite de registros por página
+            .orderBy('record.date', 'DESC'); // Ordenar por fecha (más reciente primero)
 
         // Obtener los registros y el conteo total
         const [records, total] = await queryBuilder.getManyAndCount();
@@ -418,4 +430,95 @@ export const updateOutputRecord = async (req: Request, res: Response): Promise<a
 // Actualizar registro para tipo 'sale'
 export const updateSaleRecord = async (req: Request, res: Response): Promise<any> => {
     return updateRecordByType(req, res, 'sale');
+};
+
+
+// Delete
+export const deleteRecordById = async (req: Request, res: Response): Promise<any> => {
+    const { id } = req.params; // Obtenemos el id del parámetro
+
+    if (!id) {
+        return res.status(400).json({ message: 'Missing record ID.' });
+    }
+
+    try {
+        const recordRepo = AppDataSource.getRepository(TransactionRecord);
+        const bagRepo = AppDataSource.getRepository(Bag);
+
+        // Buscamos el registro
+        const record = await recordRepo.findOne({
+            where: { id },
+            relations: ['bags'], // Traemos las bolsas relacionadas
+        });
+
+        if (!record) {
+            return res.status(404).json({ message: 'Record not found.' });
+        }
+
+        if (record.type === 'income') {
+            // Si es un ingreso, restauramos las cantidades en las bolsas asociadas a las ventas o salidas
+            const bagIds = record.bags.map(bag => bag.id);
+            for (const bag of record.bags) {
+                // Ajustamos las cantidades de las bolsas
+                const relatedSalesOrOutputs = await recordRepo.find({
+                    where: {
+                        bags: { id: bag.id },
+                        type: In(['sale', 'output']),
+                    },
+                    relations: ['bags'],
+                });
+
+                relatedSalesOrOutputs.forEach(async (relatedRecord) => {
+                    const relatedBag = relatedRecord.bags.find(b => b.id === bag.id);
+                    if (relatedBag) {
+                        // Restituir cantidad al ingreso
+                        relatedBag.quantity += bag.quantity;
+                        await bagRepo.save(relatedBag);
+                    }
+                });
+            }
+        } else if (['sale', 'output'].includes(record.type)) {
+            // Si es una venta o salida, actualizamos las cantidades en el ingreso relacionado
+            const bags = record.bags;
+            for (const bag of bags) {
+                // Encontramos el ingreso relacionado y restauramos las cantidades
+                const incomeRecord = await recordRepo.findOne({
+                    where: {
+                        bags: { id: bag.id },
+                        type: 'income',
+                    },
+                    relations: ['bags'],
+                });
+
+                if (incomeRecord) {
+                    const incomeBag = incomeRecord.bags.find(b => b.id === bag.id);
+                    if (incomeBag) {
+                        // Ajustamos la cantidad en el registro de ingreso
+                        incomeBag.quantity -= bag.quantity;
+                        await bagRepo.save(incomeBag);
+                    }
+                }
+            }
+        }
+
+        // Cambiamos el estado a false para el Record
+        record.isActive = false;
+        await recordRepo.save(record);
+
+        // Cambiamos el estado a false para las bolsas relacionadas
+        if (record.bags.length > 0) {
+            const bagIds = record.bags.map(bag => bag.id);
+            await bagRepo.update(bagIds, { isActive: false });
+        }
+
+        return res.status(200).json({
+            message: 'Record and related bags have been deactivated and quantities restored.',
+        });
+    } catch (error: any) {
+        console.error(error);
+        return res.status(500).json({
+            message: error.message || 'Error deactivating record and bags.',
+            stack: error.stack || '',
+        });
+    }
 };
