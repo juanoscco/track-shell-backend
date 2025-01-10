@@ -21,6 +21,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: process.env.DB_SYNCHRONIZE === 'true',
   logging: process.env.DB_LOGGING === 'true',
+  ssl: process.env.DB_SSL === 'true',  // Habilitar SSL
   entities: [User, Store, Category, Client, Record, Bag, SPH, CYL],
   migrations: [],
   subscribers: [],
