@@ -5,18 +5,19 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
-    "rootDir": "./src", // Define la carpeta fuente
-    "outDir": "./dist", // Carpeta de salida para la compilación
-    "sourceMap": true, // Para depuración (opcional)
-    "experimentalDecorators": true, // Enable decorators
-    "emitDecoratorMetadata": true, // Add metadata for decorators (needed for TypeORM)
-    "strictPropertyInitialization": false, // Disable strict property initialization
+    "rootDir": "./src", 
+    "outDir": "./dist", 
+    "sourceMap": true, 
+    "experimentalDecorators": true, 
+    "emitDecoratorMetadata": true, 
+    "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./@types"],
     "types": ["node", "express"]
   },
   "include": [
-    "src/types/**/*.d.ts", // Incluye el archivo de tipos
+    "src/types/**/*.d.ts",
     "src/**/*"
-  ]
+  ],
+  "exclude": ["node_modules"]
 }

@@ -16,11 +16,7 @@ import sphRouter from './modules/Sph/routers/sph.router';
 const app = express();
 
 // Middleware para habilitar CORS y permitir solicitudes desde una URL específica
-app.use(cors({
-    origin: 'https://track-shell-frontend.vercel.app', // URL del frontend
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos HTTP permitidos
-    credentials: true, // Habilita el uso de cookies si es necesario
-  }));
+app.use(cors());
 
 // Middleware para parsear JSON
 app.use(express.json());

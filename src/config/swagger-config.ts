@@ -10,12 +10,12 @@ const swaggerConfig = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 8080}`,
-        description: 'Development server',
-      },
-      {
-        url: 'https://track-shell-backend.onrender.com/',
-        description: 'Production server',
+        url: process.env.NODE_ENV === 'development' ?
+          `http://localhost:${process.env.PORT || 8081}` :
+          `http://185.198.27.220:${process.env.PORT || 8080}`,
+        description: process.env.NODE_ENV === 'development' ?
+          'Development server' :
+          'Production server',
       },
     ],
     components: {
@@ -34,16 +34,27 @@ const swaggerConfig = {
       },
     ],
   },
-  apis: [
-    './src/modules/Users/routers/*.ts',   // Rutas de usuarios
-    './src/modules/Store/routers/*.ts',   // Rutas de tiendas 
-    './src/modules/Categories/routers/*.ts',   // Rutas de categorias
-    './src/modules/Records/routers/*.ts',
-    './src/modules/Clients/routers/*.ts',
-    './src/modules/Bag/routers/*.ts',
-    './src/modules/Cyl/routers/*.ts',
-    './src/modules/Sph/routers/*.ts',
-  ],
+  apis: process.env.NODE_ENV === 'development'
+    ? [
+      './src/modules/Users/routers/*.ts',
+      './src/modules/Store/routers/*.ts',
+      './src/modules/Categories/routers/*.ts',
+      './src/modules/Records/routers/*.ts',
+      './src/modules/Clients/routers/*.ts',
+      './src/modules/Bag/routers/*.ts',
+      './src/modules/Cyl/routers/*.ts',
+      './src/modules/Sph/routers/*.ts',
+    ]
+    : [
+      './dist/modules/Users/routers/*.js',
+      './dist/modules/Store/routers/*.js',
+      './dist/modules/Categories/routers/*.js',
+      './dist/modules/Records/routers/*.js',
+      './dist/modules/Clients/routers/*.js',
+      './dist/modules/Bag/routers/*.js',
+      './dist/modules/Cyl/routers/*.js',
+      './dist/modules/Sph/routers/*.js',
+    ],
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerConfig);
