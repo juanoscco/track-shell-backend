@@ -8,7 +8,7 @@ const port = parseInt(process.env.PORT || '8080', 10); // Puerto desde el archiv
 AppDataSource.initialize()
   .then(() => {
     console.log('Base de datos conectada');
-    app.listen(port, host, () => {
+    app.listen(port, () => {
       console.log(`Servidor corriendo en http://${host}:${port}`);
       console.log(`Swagger docs disponibles en http://${host}:${port}/api-docs`);
     });
