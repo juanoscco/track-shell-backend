@@ -1,4 +1,8 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import { getLocalIPAddress } from '../utils';
+
+const host = getLocalIPAddress();
+const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 
 const swaggerConfig = {
   swaggerDefinition: {
@@ -8,16 +12,14 @@ const swaggerConfig = {
       version: '1.0.0',
       description: 'API for managing users with roles and store information',
     },
-    servers: [
-      {
-        url: process.env.NODE_ENV === 'development' ?
-          `http://localhost:${process.env.PORT || 8081}` :
-          `http://185.198.27.220:${process.env.PORT || 8080}`,
-        description: process.env.NODE_ENV === 'development' ?
-          'Development server' :
-          'Production server',
-      },
-    ],
+    servers: process.env.NODE_ENV === 'production'
+      ? []
+      : [
+          {
+            url: `${protocol}://${host}:${process.env.PORT || 8080}`,
+            description: 'Development server',
+          },
+        ],
     components: {
       securitySchemes: {
         bearerAuth: {
