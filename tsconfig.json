@@ -13,7 +13,7 @@
     "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
     "typeRoots": ["./node_modules/@types", "./@types"],
-    "types": ["node"]
+    "types": ["node", "express"]
   },
   "include": [
     "src/types/**/*.d.ts",
