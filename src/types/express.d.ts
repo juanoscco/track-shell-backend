@@ -1,3 +1,4 @@
+declare module 'express';
 // src/types/express.d.ts
 import type { User } from "../models/User"; // Asegúrate que la ruta sea correcta
 
