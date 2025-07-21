@@ -1,11 +1,12 @@
 // src/types/express.d.ts
-import { User } from "../models/User"; // Importa el tipo de User (ajusta la ruta a tu proyecto)
-
+import type { User } from "../models/User"; // Asegúrate que la ruta sea correcta
 
 declare global {
   namespace Express {
-      interface Request {
-          user?: User; // Declara que `req.user` puede ser de tipo `User`
-      }
+    interface Request {
+      user?: User;
+    }
   }
 }
+
+export {};
