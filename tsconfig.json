@@ -5,19 +5,15 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
-    "rootDir": "./src", 
-    "outDir": "./dist", 
-    "sourceMap": true, 
-    "experimentalDecorators": true, 
-    "emitDecoratorMetadata": true, 
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./node_modules/@types", "./@types"],
-    "types": ["node", "express"]
+    "typeRoots": ["./node_modules/@types", "./@types"]
   },
-  "include": [
-    "src/types/**/*.d.ts",
-    "src/**/*"
-  ],
+  "include": ["src/types/**/*.d.ts", "src/**/*"],
   "exclude": ["node_modules"]
 }
